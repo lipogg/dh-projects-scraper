@@ -38,7 +38,5 @@ class GitSpider(scrapy.Spider):
         refs = root.findall('.//{http://www.tei-c.org/ns/1.0}ref')
         item = DhscraperItem()
         item["origin"] = response.url
-        item["urls"] = []
-        for r in refs:
-            item["urls"].append(r.attrib['target'])
+        item["urls"] = [ref.attrib['target'] for ref in refs]
         return item

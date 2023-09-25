@@ -1,7 +1,6 @@
 from scrapy.spiders import XMLFeedSpider
 from dhscraper.items import DhscraperItem
 
-# comment out ROBOTSTXT_OBEY = True in settings.py to run this spider
 class ZenodoSpider(XMLFeedSpider):
     """identify the spider"""
     name = "zenodo"
@@ -12,6 +11,8 @@ class ZenodoSpider(XMLFeedSpider):
     namespaces = [('tei', 'http://www.tei-c.org/ns/1.0')]
     iterator = "iternodes"
     itertag = "ref"
+
+    custom_settings = {'ROBOTSTXT_OBEY': False}
 
     def parse_node(self, response, node):
         """

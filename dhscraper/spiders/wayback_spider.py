@@ -21,8 +21,6 @@ class WaybackSpider(scrapy.Spider):
         """
         item = DhscraperItem()
         item["origin"] = response.url
-        item["urls"] = []
-        for file_url in response.xpath("//p/a/@href|//p/*/a/@href").getall():
-            item["urls"].append(file_url)
+        item["urls"] = [ref for ref in response.xpath("//p/a/@href|//p/*/a/@href").getall()]
         return item
 
