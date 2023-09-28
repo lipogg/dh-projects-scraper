@@ -2,7 +2,9 @@ import scrapy
 from dhscraper.items import DhscraperItem
 import xml.etree.ElementTree as ET
 import json
-
+import fitz
+import re
+import io
 
 class GitSpider(scrapy.Spider):
     """identify the spider"""
@@ -36,6 +38,11 @@ class GitSpider(scrapy.Spider):
         item = DhscraperItem()
         if response.url.endswith(".pdf"):
             item["origin"] = response.url
+            filestream = io.BytesIO(response.body)
+            pdf = fitz.open(stream=filestream, filetype="pdf")
+            pattern = r"https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=\n]{1,256}\.[a-zA-Z0-9()\n]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=\n]*)"
+            text = chr(12).join([page.get_text(flags=16) for page in pdf])
+            item["urls"] = [match.group() for match in re.finditer(pattern, text)]
         else:
             xml_string = response.text
             root = ET.fromstring(xml_string)
