@@ -19,16 +19,17 @@ class DataverseSpider(scrapy.Spider):
         """
         handles the response downloaded for each of the requests made
         """
-        response_dict = json.loads(response.body)  # .text
+        response_dict = json.loads(response.body)
         for item in response_dict["data"]["items"]:
-            yield scrapy.Request(item["url"], callback=self.parse_abstract)
+            yield scrapy.Request(item["url"], callback=self.parse_abstract, meta={"start_url": response.url})
 
     def parse_abstract(self, response):
         """
         handles the response downloaded for each of the requests made: extracts links to dh projects from abstract xml files
         """
         item = DhscraperItem()
-        item["origin"] = response.url
+        item["abstract"] = response.url
+        item["origin"] = response.meta["start_url"]
         filestream = io.BytesIO(response.body)
         pdf = fitz.open(stream=filestream, filetype="pdf")
         item["urls"] = {elem['uri'] for page in pdf for elem in page.get_links() if 'uri' in elem} # set comprehension to remove duplicates derived from malformatted hyperlinks

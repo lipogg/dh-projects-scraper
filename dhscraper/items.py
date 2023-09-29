@@ -11,4 +11,5 @@ class DhscraperItem(scrapy.Item):
     # item fields
     urls = scrapy.Field()
     origin = scrapy.Field()
+    abstract = scrapy.Field()
     pass

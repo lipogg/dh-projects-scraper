@@ -13,14 +13,15 @@ class WaybackSpider(scrapy.Spider):
         """
         handles the response downloaded for the request made for the start url
         """
-        yield from response.follow_all(xpath="//*[@id='post-1064']/div/div/ul/li/a", callback=self.parse_abstract)
+        yield from response.follow_all(xpath="//*[@id='post-1064']/div/div/ul/li/a", callback=self.parse_abstract, meta={"start_url": response.url})
 
     def parse_abstract(self, response):
         """
         handles the response downloaded for each of the requests made: extracts links to dh projects from abstracts
         """
         item = DhscraperItem()
-        item["origin"] = response.url
+        item["abstract"] = response.url
+        item["origin"] = response.meta["start_url"]
         item["urls"] = [ref for ref in response.xpath("//p/a/@href|//p/*/a/@href").getall()]
         return item
 

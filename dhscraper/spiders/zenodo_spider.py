@@ -10,7 +10,7 @@ class ZenodoSpider(XMLFeedSpider):
     ]
     namespaces = [('tei', 'http://www.tei-c.org/ns/1.0')]
     iterator = "iternodes"
-    itertag = "ref"
+    itertag = "TEI"
 
     custom_settings = {'ROBOTSTXT_OBEY': False}
 
@@ -19,8 +19,9 @@ class ZenodoSpider(XMLFeedSpider):
         handles the response downloaded for the request made for the start url
         """
         item = DhscraperItem()
-        item["urls"] = node.attrib['target']
         item["origin"] = response.url
+        item["abstract"] = node.xpath('@n').get()
+        item["urls"] = node.xpath('.//ref/@target', namespaces=self.namespaces).getall() #response.url
         return item
 
 
