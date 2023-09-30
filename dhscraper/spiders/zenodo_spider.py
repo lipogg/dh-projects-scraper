@@ -21,7 +21,7 @@ class ZenodoSpider(XMLFeedSpider):
         item = DhscraperItem()
         item["origin"] = response.url
         item["abstract"] = node.xpath('@n').get()
-        item["urls"] = node.xpath('.//ref/@target', namespaces=self.namespaces).getall() #response.url
+        item["urls"] = set(node.xpath('.//ref/@target', namespaces=self.namespaces).getall()) #response.url
         return item
 
 

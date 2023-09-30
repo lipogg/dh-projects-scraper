@@ -25,7 +25,7 @@ class AdhoSpider(scrapy.Spider):
         item["origin"] = response.meta["start_url"]
         pattern = r"https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=\n]{1,256}\.[a-zA-Z0-9()\n]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=\n]*)"
         abstract = response.xpath("//*[@id='index.xml-body.1_div.1']").get()
-        item["urls"] = [match.group() for match in re.finditer(pattern, abstract)]
+        item["urls"] = {match.group() for match in re.finditer(pattern, abstract)}
         return item
 
 

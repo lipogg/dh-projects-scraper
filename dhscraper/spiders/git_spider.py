@@ -43,16 +43,16 @@ class GitSpider(scrapy.Spider):
             filestream = io.BytesIO(response.body)
             pdf = fitz.open(stream=filestream, filetype="pdf")
             text = chr(12).join([page.get_text(flags=16) for page in pdf])
-            item["urls"] = [match.group() for match in re.finditer(pattern, text)]
+            item["urls"] = {match.group() for match in re.finditer(pattern, text)}
         else:
             xml_string = response.text
             root = ET.fromstring(xml_string)
             refs = root.findall('.//{http://www.tei-c.org/ns/1.0}ref')
             item["abstract"] = response.url
-            item["urls"] = [ref.attrib['target'] for ref in refs]
+            item["urls"] = {ref.attrib['target'] for ref in refs}
             # catch malformatted urls: Several urls are not <ref> elements, but plain text
             p_text = ' '.join([p.text for p in root.findall('.//{http://www.tei-c.org/ns/1.0}p') if p.text])
             bibl_text = ' '.join([bibl.text for bibl in root.findall('.//{http://www.tei-c.org/ns/1.0}bibl') if bibl.text])
-            mf_urls = [match.group() for match in re.finditer(pattern, f"{p_text} {bibl_text}")]
-            item["urls"].extend(mf_urls)
+            mf_urls = {match.group() for match in re.finditer(pattern, f"{p_text} {bibl_text}")}
+            item["urls"].update(mf_urls)
         return item
