@@ -7,3 +7,5 @@ __pycache__/
 .idea
 # Virtual Environment
 dhvenv/
+# Creds
+creds.json
