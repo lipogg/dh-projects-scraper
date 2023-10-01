@@ -27,8 +27,8 @@ class DhscraperPipeline:
     def process_urls(self, adapter):
         exclude_domains = ["doi", "tei-c", "w3", "wikipedia", "wikidata", "orcid",
                            "cidoc-crm", "jstor", "zotero", "researchgate", "gephi",
-                           "zenodo", "culturalanalytics", "nature", "medium",
-                           "reddit", "arxiv", "journalofdigitalhumanities",
+                           "zenodo", "culturalanalytics", "nature", "medium", "twitter",
+                           "reddit", "arxiv", "journalofdigitalhumanities", "youtube",
                            "theguardian", "sciencedirect", "archives-ouvertes"]
         exclude_subdomains = ["journals"]
         adapter["urls"] = list(adapter["urls"])  # convert set to list
@@ -41,8 +41,8 @@ class DhscraperPipeline:
                     url_parts.domain not in exclude_domains
                     and url_parts.subdomain not in exclude_subdomains
                     and not cleaned_url.endswith((".pdf", ".xml", ".jpg", ".jpeg", ".png"))
-                    and url_parts.suffix # validate url: suffix is empty string if invalid
-                    and not validators.email(cleaned_url) # exclude email addresses
+                    and url_parts.suffix  # validate url: suffix is empty string if invalid
+                    and not validators.email(cleaned_url)  # exclude email addresses
             ):
                 valid_urls.append(cleaned_url)
         adapter["urls"] = valid_urls
