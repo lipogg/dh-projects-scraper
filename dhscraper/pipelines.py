@@ -27,14 +27,15 @@ class DhscraperPipeline:
     def process_urls(self, adapter):
         exclude_domains = ["doi", "tei-c", "w3", "wikipedia", "wikidata", "orcid",
                            "cidoc-crm", "jstor", "zotero", "researchgate", "gephi",
-                           "zenodo", "journals", "culturalanalytics", "dhdebates",
-                           "reddit", "arxiv"]
+                           "zenodo", "journals", "culturalanalytics", "nature",
+                           "reddit", "arxiv", "journalofdigitalhumanities",
+                           "medium", "theguardian", "sciencedirect"]
         adapter["urls"] = list(adapter["urls"])  # convert set to list
-        pattern_end = r'[\./\):]+$|(\-?\\n)|\([^)]+\s*$'  # match any combination of /, ), : and . or open brackets at the end of a sentence, \n and -\n anywhere, with trailing whitespace
-        pattern_url = r"(https?:\/\/)?(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)"
+        pattern_end = r'[\./\):]+$|(\-?\n)|\([^)]+$|\((A|accessed).*|\s*$'  # match any combination of /, ), : and . or open brackets at the end of a sentence, \n and -\n anywhere, with trailing whitespace
+        pattern_url = r"(?<!mailto:)(https?:\/\/)?(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)"
         valid_urls = []
         for url in adapter["urls"]:
-            cleaned_url = re.sub(pattern_end, "", url.strip())
+            cleaned_url = re.sub(pattern_end, "", url)
             if (
                     extract(cleaned_url).domain not in exclude_domains
                     and not cleaned_url.endswith((".pdf", ".xml"))
