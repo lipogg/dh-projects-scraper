@@ -6,6 +6,7 @@ import fitz
 import re
 import io
 
+
 class GitSpider(scrapy.Spider):
     """identify the spider"""
     name = "github"
@@ -55,4 +56,4 @@ class GitSpider(scrapy.Spider):
             bibl_text = ' '.join([bibl.text for bibl in root.findall('.//{http://www.tei-c.org/ns/1.0}bibl') if bibl.text])
             mf_urls = {match.group() for match in re.finditer(pattern, f"{p_text} {bibl_text}")}
             item["urls"].update(mf_urls)
-        return item
+        yield item

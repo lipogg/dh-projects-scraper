@@ -2,6 +2,7 @@ import scrapy
 from dhscraper.items import DhscraperItem
 import re
 
+
 class AdhoSpider(scrapy.Spider):
     """identify the spider"""
     name = "adho_website"
@@ -26,6 +27,6 @@ class AdhoSpider(scrapy.Spider):
         pattern = r"(?<!mailto:)(https?://)?(www\.)?[-a-zA-Z0-9@:%._\+~#=\n]{1,256}\.[a-zA-Z0-9()\n]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=\n]*)"
         abstract = response.xpath("//*[@id='index.xml-body.1_div.1']").get()
         item["urls"] = {match.group() for match in re.finditer(pattern, abstract)}
-        return item
+        yield item
 
 

@@ -4,6 +4,7 @@ import json
 import fitz
 import io
 
+
 class DataverseSpider(scrapy.Spider):
     """identify the spider"""
     name = "dataverse"
@@ -33,4 +34,4 @@ class DataverseSpider(scrapy.Spider):
         filestream = io.BytesIO(response.body)
         pdf = fitz.open(stream=filestream, filetype="pdf")
         item["urls"] = {elem['uri'] for page in pdf for elem in page.get_links() if 'uri' in elem} # set comprehension to remove duplicates derived from malformatted hyperlinks
-        return item
+        yield item

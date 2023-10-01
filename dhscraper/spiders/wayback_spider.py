@@ -1,6 +1,7 @@
 import scrapy
 from dhscraper.items import DhscraperItem
 
+
 class WaybackSpider(scrapy.Spider):
     """identify the spider"""
     name = "wayback_machine"
@@ -23,5 +24,5 @@ class WaybackSpider(scrapy.Spider):
         item["abstract"] = response.url
         item["origin"] = response.meta["start_url"]
         item["urls"] = {ref for ref in response.xpath("//p/a/@href|//p/*/a/@href").getall()}
-        return item
+        yield item
 

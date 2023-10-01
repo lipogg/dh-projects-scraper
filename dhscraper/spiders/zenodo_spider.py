@@ -1,6 +1,7 @@
 from scrapy.spiders import XMLFeedSpider
 from dhscraper.items import DhscraperItem
 
+
 class ZenodoSpider(XMLFeedSpider):
     """identify the spider"""
     name = "zenodo"
@@ -22,7 +23,7 @@ class ZenodoSpider(XMLFeedSpider):
         item["origin"] = response.url
         item["abstract"] = node.xpath('@n').get()
         item["urls"] = set(node.xpath('.//ref/@target', namespaces=self.namespaces).getall()) #response.url
-        return item
+        yield item
 
 
 
