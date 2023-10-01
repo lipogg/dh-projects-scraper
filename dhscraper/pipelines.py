@@ -8,7 +8,7 @@ import re
 from itemadapter import ItemAdapter
 from tldextract import extract
 from urllib.parse import urlparse
-#import validators
+import validators
 
 
 class DhscraperPipeline:
@@ -27,19 +27,22 @@ class DhscraperPipeline:
     def process_urls(self, adapter):
         exclude_domains = ["doi", "tei-c", "w3", "wikipedia", "wikidata", "orcid",
                            "cidoc-crm", "jstor", "zotero", "researchgate", "gephi",
-                           "zenodo", "journals", "culturalanalytics", "nature",
+                           "zenodo", "culturalanalytics", "nature", "medium",
                            "reddit", "arxiv", "journalofdigitalhumanities",
-                           "medium", "theguardian", "sciencedirect"]
+                           "theguardian", "sciencedirect", "archives-ouvertes"]
+        exclude_subdomains = ["journals"]
         adapter["urls"] = list(adapter["urls"])  # convert set to list
         pattern_end = r'[\./\):]+$|(\-?\n)|\([^)]+$|\((A|accessed).*|\s*$'  # match any combination of /, ), : and . or open brackets at the end of a sentence, \n and -\n anywhere, with trailing whitespace
-        pattern_url = r"(?<!mailto:)(https?:\/\/)?(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)"
         valid_urls = []
         for url in adapter["urls"]:
             cleaned_url = re.sub(pattern_end, "", url)
+            url_parts = extract(cleaned_url)
             if (
-                    extract(cleaned_url).domain not in exclude_domains
-                    and not cleaned_url.endswith((".pdf", ".xml"))
-                    and re.search(pattern_url, cleaned_url)
+                    url_parts.domain not in exclude_domains
+                    and url_parts.subdomain not in exclude_subdomains
+                    and not cleaned_url.endswith((".pdf", ".xml", ".jpg", ".jpeg", ".png"))
+                    and url_parts.suffix # validate url: suffix is empty string if invalid
+                    and not validators.email(cleaned_url) # exclude email addresses
             ):
                 valid_urls.append(cleaned_url)
         adapter["urls"] = valid_urls

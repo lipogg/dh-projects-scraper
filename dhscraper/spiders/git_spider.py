@@ -37,7 +37,7 @@ class GitSpider(scrapy.Spider):
         """
         item = DhscraperItem()
         item["origin"] = response.meta["start_url"]
-        pattern = r"https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=\n]{1,256}\.[a-zA-Z0-9()\n]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=\n]*)"
+        pattern = r"(?<!mailto:)(https?://)?(www\.)?[-a-zA-Z0-9@:%._\+~#=\n]{1,256}\.[a-zA-Z0-9()\n]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=\n]*)"
         if response.url.endswith(".pdf"):
             item["abstract"] = response.url
             filestream = io.BytesIO(response.body)
