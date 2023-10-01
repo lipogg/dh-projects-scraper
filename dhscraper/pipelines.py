@@ -6,7 +6,6 @@
 import gspread
 import re
 from itemadapter import ItemAdapter
-#from scrapy.exceptions import DropItem
 from tldextract import extract
 from urllib.parse import urlparse
 #import validators
@@ -31,21 +30,17 @@ class DhscraperPipeline:
                            "zenodo", "journals", "culturalanalytics", "dhdebates",
                            "reddit", "arxiv"]
         adapter["urls"] = list(adapter["urls"])  # convert set to list
-        pattern_end = r'[\./\):]+$|(\-?\\n)|\([^)]+$'  # match any combination of /, ) and . or open brackets at the end of a sentence, \n and -\n anywhere
-        for i, url in enumerate(adapter["urls"]):
-            adapter["urls"][i] = url.strip() # remove whitespace
-            if re.search(pattern_end, url):
-                adapter["urls"][i] = re.sub(pattern_end, "", url)
+        pattern_end = r'[\./\):]+$|(\-?\\n)|\([^)]+\s*$'  # match any combination of /, ), : and . or open brackets at the end of a sentence, \n and -\n anywhere, with trailing whitespace
+        pattern_url = r"(https?:\/\/)?(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)"
         valid_urls = []
-        for i, url in enumerate(adapter["urls"]): # make a copy # enumerate(list(adapter["urls"]))
-            pattern_url = r"(https?:\/\/)?(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)"
-            if extract(url).domain in exclude_domains or url.endswith((".pdf", ".xml")):
-                continue
-            elif not re.search(pattern_url, url):
-                continue
-            #if not validators.url(url):
-            else:
-                valid_urls.append(url)
+        for url in adapter["urls"]:
+            cleaned_url = re.sub(pattern_end, "", url.strip())
+            if (
+                    extract(cleaned_url).domain not in exclude_domains
+                    and not cleaned_url.endswith((".pdf", ".xml"))
+                    and re.search(pattern_url, cleaned_url)
+            ):
+                valid_urls.append(cleaned_url)
         adapter["urls"] = valid_urls
 
     def get_path_length(self, adapter):
@@ -78,8 +73,8 @@ class GoogleSheetsPipeline:
     def __init__(self):
         gc = gspread.service_account(filename="./creds.json")
         self.sh = gc.open("DH Projects").sheet1
-        self.header = ["Year", "Origin", "Abstract", "Path Length", "Project Url"] # remove self.?
-        self.rows = [self.header] if self.sh.acell("A1").value is None else []
+        header = ["Year", "Origin", "Abstract", "Path Length", "Project Url"]
+        self.rows = [header] if self.sh.acell("A1").value is None else []
 
     def process_item(self, item, spider):
         adapter = ItemAdapter(item)
