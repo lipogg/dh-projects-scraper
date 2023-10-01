@@ -13,4 +13,5 @@ class DhscraperItem(scrapy.Item):
     origin = scrapy.Field()
     abstract = scrapy.Field()
     year = scrapy.Field()
+    path_length = scrapy.Field()
     pass
