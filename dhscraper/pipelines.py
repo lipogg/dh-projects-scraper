@@ -21,8 +21,8 @@ class DhscraperPipeline:
         return item
 
     def extract_year(self, adapter):
-        pattern_year = r'(dh|/)(\d{4})'
-        adapter["year"] = re.search(pattern_year, adapter["origin"], re.IGNORECASE).group(2)
+        pattern_year = r'dh(\d{4})'
+        adapter["year"] = re.search(pattern_year, adapter["origin"], re.IGNORECASE).group(1)
 
     def process_urls(self, adapter):
         exclude_domains = ["doi", "tei-c", "w3", "wikipedia", "wikidata", "orcid",
