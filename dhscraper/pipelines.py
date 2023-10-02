@@ -21,8 +21,8 @@ class DhscraperPipeline:
         return item
 
     def extract_year(self, adapter):
-        pattern_year = r'dh(\d{4})'
-        adapter["year"] = re.search(pattern_year, adapter["origin"], re.IGNORECASE).group(1)
+        pattern_year = r'(dh|/)(\d{4})'
+        adapter["year"] = re.search(pattern_year, adapter["origin"], re.IGNORECASE).group(2)
 
     def process_urls(self, adapter):
         exclude_domains = ["doi", "tei-c", "w3", "wikipedia", "wikidata", "orcid",
@@ -41,8 +41,9 @@ class DhscraperPipeline:
                     url_parts.domain not in exclude_domains
                     and url_parts.subdomain not in exclude_subdomains
                     and not cleaned_url.endswith((".pdf", ".xml", ".jpg", ".jpeg", ".png"))
+                    and not cleaned_url.startswith("mailto")
                     and url_parts.suffix  # validate url: suffix is empty string if invalid
-                    and not validators.email(cleaned_url)  # exclude email addresses
+                    and not validators.email(cleaned_url)  # exclude email addresses not preceded by mailto scheme
             ):
                 valid_urls.append(cleaned_url)
         adapter["urls"] = valid_urls
@@ -77,8 +78,7 @@ class GoogleSheetsPipeline:
     def __init__(self):
         gc = gspread.service_account(filename="./creds.json")
         self.sh = gc.open("DH Projects").sheet1
-        header = ["Year", "Origin", "Abstract", "Path Length", "Project Url"]
-        self.rows = [header] if self.sh.acell("A1").value is None else []
+        self.rows = []
 
     def process_item(self, item, spider):
         adapter = ItemAdapter(item)
@@ -88,4 +88,7 @@ class GoogleSheetsPipeline:
         return item
 
     def close_spider(self, spider):
+        header = ["Year", "Origin", "Abstract", "Path Length", "Project Url"]
+        if self.sh.acell("A1").value == "":
+            self.sh.append_row(header)
         self.sh.append_rows(self.rows)
