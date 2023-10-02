@@ -11,16 +11,16 @@ class GitSpider(scrapy.Spider):
     """identify the spider"""
     name = "github"
     allowed_domains = ["api.github.com", "raw.githubusercontent.com"]
-    start_urls = ["https://api.github.com/repos/ADHO/dh2016/contents/xml",
-                  "https://api.github.com/repos/ADHO/dh2015/contents/xml",
-                  "https://api.github.com/repos/ADHO/data_dh2013/contents/source/tei",
-                  "https://api.github.com/repos/747/tei-to-pdf-dh2022/contents/input/files",
-                  "https://api.github.com/repos/ADHO/dh2018/contents/xml/long-papers",
-                  "https://api.github.com/repos/ADHO/dh2018/contents/xml/panels",
-                  "https://api.github.com/repos/ADHO/dh2018/contents/xml/plenaries",
-                  "https://api.github.com/repos/ADHO/dh2018/contents/xml/posters",
-                  "https://api.github.com/repos/ADHO/dh2018/contents/xml/short-papers",
-                  "https://api.github.com/repos/ADHO/dh2018/contents/xml/workshops",
+    start_urls = [#"https://api.github.com/repos/ADHO/dh2016/contents/xml",
+                  #"https://api.github.com/repos/ADHO/dh2015/contents/xml",
+                  #"https://api.github.com/repos/ADHO/data_dh2013/contents/source/tei",
+                  #"https://api.github.com/repos/747/tei-to-pdf-dh2022/contents/input/files",
+                  #"https://api.github.com/repos/ADHO/dh2018/contents/xml/long-papers",
+                  #"https://api.github.com/repos/ADHO/dh2018/contents/xml/panels",
+                  #"https://api.github.com/repos/ADHO/dh2018/contents/xml/plenaries",
+                  #"https://api.github.com/repos/ADHO/dh2018/contents/xml/posters",
+                  #"https://api.github.com/repos/ADHO/dh2018/contents/xml/short-papers",
+                  #"https://api.github.com/repos/ADHO/dh2018/contents/xml/workshops",
                   "https://api.github.com/repos/ADHO/dh2017/contents/pdf",
                   ]
 
@@ -34,11 +34,11 @@ class GitSpider(scrapy.Spider):
 
     def parse_abstract(self, response):
         """
-        handles the response downloaded for each of the requests made: extracts links to dh projects from abstract xml files
+        handles the response downloaded for each of the requests made: extracts links to dh projects from abstract xml/pdf files
         """
         item = DhscraperItem()
         item["origin"] = response.meta["start_url"]
-        pattern = r"(?<!mailto:)(https?://)?(www\.)?[-a-zA-Z0-9@:%._\+~#=\n]{1,256}\.[a-zA-Z0-9()\n]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=\n]*)"
+        pattern = r"(https?://)?(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.(?:[a-zA-Z0-9()]{1,6}\b)(?:[-a-zA-Z0-9()@:%_\+.~#?&//=]*)"  # match emails here and exclude later to prevent accidentally matching email domains
         if response.url.endswith(".pdf"):
             item["abstract"] = response.url
             filestream = io.BytesIO(response.body)
@@ -51,7 +51,7 @@ class GitSpider(scrapy.Spider):
             refs = root.findall('.//{http://www.tei-c.org/ns/1.0}ref')
             item["abstract"] = response.url
             item["urls"] = {ref.attrib['target'] for ref in refs}
-            # catch malformatted urls: Several urls are not <ref> elements, but plain text
+            # catch malformed urls: Several urls are not <ref> element attributes, but plain text in <p> elements
             p_text = ' '.join([p.text for p in root.findall('.//{http://www.tei-c.org/ns/1.0}p') if p.text])
             bibl_text = ' '.join([bibl.text for bibl in root.findall('.//{http://www.tei-c.org/ns/1.0}bibl') if bibl.text])
             mf_urls = {match.group() for match in re.finditer(pattern, f"{p_text} {bibl_text}")}
