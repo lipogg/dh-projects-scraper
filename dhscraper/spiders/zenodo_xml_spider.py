@@ -2,18 +2,16 @@ from scrapy.spiders import XMLFeedSpider
 from dhscraper.items import DhscraperItem
 
 
-class ZenodoSpider(XMLFeedSpider):
+class ZenodoXMLSpider(XMLFeedSpider):
     """identify the spider"""
-    name = "zenodo"
+    name = "zenodo_xml"
     allowed_domains = ["zenodo.org"]
     start_urls = [
-        "https://zenodo.org/api/files/d2da19c6-7b4e-42d1-86dd-d959724ca851/DH2023_BookOfAbstracts.xml",
+        "https://zenodo.org/record/8210808/files/DH2023_BookOfAbstracts_v2.xml",
     ]
     namespaces = [('tei', 'http://www.tei-c.org/ns/1.0')]
     iterator = "iternodes"
     itertag = "TEI"
-
-    custom_settings = {'ROBOTSTXT_OBEY': False}
 
     def parse_node(self, response, node):
         """
@@ -22,7 +20,7 @@ class ZenodoSpider(XMLFeedSpider):
         item = DhscraperItem()
         item["origin"] = response.url
         item["abstract"] = node.xpath('@n').get()
-        item["urls"] = set(node.xpath('.//ref/@target', namespaces=self.namespaces).getall()) #response.url
+        item["urls"] = set(node.xpath('.//ref/@target', namespaces=self.namespaces).getall())
         yield item
 
 
