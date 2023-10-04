@@ -12,6 +12,9 @@ BOT_NAME = "dhscraper"
 SPIDER_MODULES = ["dhscraper.spiders"]
 NEWSPIDER_MODULE = "dhscraper.spiders"
 
+# Set up logs
+LOG_FILE = "logfile.log"
+LOG_LEVEL = "DEBUG"
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
 USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36"
