@@ -32,7 +32,7 @@ class DhscraperPipeline:
                            "theguardian", "sciencedirect", "archives-ouvertes"]
         exclude_subdomains = ["journals"]
         adapter["urls"] = list(adapter["urls"])  # convert set to list
-        pattern_end = r'[\./\):]+$|(\-?\n)|\([^)]+$|\((A|accessed).*|\s*$'  # match any combination of /, ), : and . or open brackets at the end of a sentence, \n and -\n anywhere, with trailing whitespace
+        pattern_end = r'[\./\):]+$|(\-?\n)|\s|\([^)]+$|\((A|accessed).*|\s*$'  # match any combination of /, ), : and . or open brackets at the end of a sentence, \n and -\n anywhere, with trailing whitespace
         valid_urls = []
         for url in adapter["urls"]:
             cleaned_url = re.sub(pattern_end, "", url)
@@ -40,7 +40,7 @@ class DhscraperPipeline:
             if (
                     url_parts.domain not in exclude_domains
                     and url_parts.subdomain not in exclude_subdomains
-                    and not cleaned_url.endswith((".pdf", ".xml", ".jpg", ".jpeg", ".png"))
+                    and not cleaned_url.endswith((".pdf", ".xml", ".jpg", ".jpeg", ".png", ".md", ".txt", ".zip"))
                     and not cleaned_url.startswith("mailto")
                     and url_parts.suffix  # validate url: suffix is empty string if invalid
                     and not validators.email(cleaned_url)  # exclude email addresses not preceded by mailto scheme
@@ -89,6 +89,6 @@ class GoogleSheetsPipeline:
 
     def close_spider(self, spider):
         header = ["Year", "Origin", "Abstract", "Path Length", "Project Url"]
-        if self.sh.acell("A1").value == "":
+        if self.sh.acell("A1").value is None:  # this is not working! is None?
             self.sh.append_row(header)
         self.sh.append_rows(self.rows)
