@@ -4,6 +4,7 @@ import xml.etree.ElementTree as ET
 import json
 import regex
 import logging
+from ..constants import URL_PATTERN
 
 
 class GitSpider(scrapy.Spider):
@@ -47,19 +48,12 @@ class GitSpider(scrapy.Spider):
         except KeyError:
             logging.error('Ref element does not have a target attribute.')
         # catch malformed urls: Several urls are not <ref> element attributes, but plain text in <p> elements
-        url_pattern = (
-            r"(https?://)?"  # matches optional "http://" or "https://"
-            r"(www\.)?"  # matches optional "www."            
-            r"[-a-zA-Z0-9@:%._\+~#=]{1,256}"  # matches main part of the domain name 
-            r"(?:-[\r\n]{0,4}[-a-zA-Z0-9@:%._\+~#=]{1,256})?"  # matches possible line breaks and the continuation of the domain or path, "-" to exclude overmatching in cases such as via\nraganwald.com 
-            r"(?:\.[a-zA-Z0-9()]{1,6}\b)+?"  # matches the TLD and possible SLDs, non-greedy quantifier to reduce backtracking
-            r"(?:[\r\n]{0,4}[-a-zA-Z0-9()@:%_\+.~#?&//=]{1,256})?"  # matches possible line breaks and the continuation of the path or query params, anchors etc
-        )
-        logging.debug('URL pattern: %s', url_pattern)
+        #bibl_text = ' '.join([bibl.text for bibl in root.findall('.//{http://www.tei-c.org/ns/1.0}bibl') if bibl.text])
         body_element = root.find('.//{http://www.tei-c.org/ns/1.0}body')
         body_text = ''.join(body_element.itertext())
         try:
-            mf_urls = {match.group() for match in regex.finditer(url_pattern, body_text, timeout=20)} #f"{p_text} {bibl_text}"
+            mf_urls = {match.group() for match in regex.finditer(URL_PATTERN, body_text, timeout=20)} # body_text + bibl_text#f"{p_text} {bibl_text}"
+            logging.debug('URL pattern: %s', URL_PATTERN)
             logging.debug('Matches found: %s', mf_urls)
             item["urls"].update(mf_urls)
         except regex.TimeoutError:

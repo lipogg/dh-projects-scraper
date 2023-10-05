@@ -1,6 +1,7 @@
 import scrapy
 from dhscraper.items import DhscraperItem
-import re
+import logging
+from ..utils import extract_urls
 
 
 class AdhoSpider(scrapy.Spider):
@@ -22,11 +23,11 @@ class AdhoSpider(scrapy.Spider):
         handles the response downloaded for each of the requests made: extracts links to dh projects from abstract web pages
         """
         item = DhscraperItem()
-        item["abstract"] = response.url
         item["origin"] = response.meta["start_url"]
-        pattern = r"(https?://)?(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.(?:[a-zA-Z0-9()]{1,6}\b)(?:[-a-zA-Z0-9()@:%_\+.~#?&//=]*)"  # match emails here and exclude later to prevent accidentally matching email domains
+        item["abstract"] = response.url
         abstract = response.xpath("//*[@id='index.xml-body.1_div.1']").get()
-        item["urls"] = {match.group() for match in re.finditer(pattern, abstract)}
+        item["urls"] = extract_urls(abstract)
+        logging.info('Item ready to be yielded')
         yield item
 
 
