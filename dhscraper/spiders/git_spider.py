@@ -47,13 +47,13 @@ class GitSpider(scrapy.Spider):
             item["urls"] = {ref.attrib['target'] for ref in refs}
         except KeyError:
             logging.error('Ref element does not have a target attribute.')
-        # catch malformed urls: Several urls are not <ref> element attributes, but plain text in <p> elements
+        # catch malformed urls: Several urls are not <ref> element attributes, but plain text in <p>, <item> or <bibl>? elements
+        # also search listBibl elements for urls not contained in ref elements?
         #bibl_text = ' '.join([bibl.text for bibl in root.findall('.//{http://www.tei-c.org/ns/1.0}bibl') if bibl.text])
         body_element = root.find('.//{http://www.tei-c.org/ns/1.0}body')
         body_text = ''.join(body_element.itertext())
         try:
-            mf_urls = {match.group() for match in regex.finditer(URL_PATTERN, body_text, timeout=20)} # body_text + bibl_text#f"{p_text} {bibl_text}"
-            logging.debug('URL pattern: %s', URL_PATTERN)
+            mf_urls = {match.group() for match in regex.finditer(URL_PATTERN, body_text, timeout=20)} # body_text + bibl_text
             logging.debug('Matches found: %s', mf_urls)
             item["urls"].update(mf_urls)
         except regex.TimeoutError:
