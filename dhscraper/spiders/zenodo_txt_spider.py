@@ -4,6 +4,7 @@ import logging
 from ..utils import extract_urls
 
 
+
 class ZenodoTXTSpider(scrapy.Spider):
     """identify the spider"""
     name = "zenodo_txt"
@@ -20,7 +21,7 @@ class ZenodoTXTSpider(scrapy.Spider):
         item = DhscraperItem()
         logging.debug('DhscraperItem created')
         item["origin"] = response.url
-        item["abstract"] = "n.a."
+        item["abstract"] = "NaN"
         abstract = response.text
         item["urls"] = extract_urls(abstract)
         logging.info('Item ready to be yielded')
