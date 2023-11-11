@@ -38,8 +38,8 @@ class DhscraperPipeline:
             cleaned_url = re.sub(pattern_end, "", url)
             url_parts = extract(cleaned_url)
             if (
-                    url_parts.domain not in exclude_domains
-                    and url_parts.subdomain not in exclude_subdomains
+                    url_parts.domain.lower() not in exclude_domains
+                    and url_parts.subdomain.lower() not in exclude_subdomains
                     and not cleaned_url.endswith((".pdf", ".xml", ".jpg", ".jpeg", ".png", ".md", ".txt", ".zip"))
                     and not cleaned_url.startswith("mailto")
                     and url_parts.suffix  # validate url: suffix is empty string if invalid
@@ -56,19 +56,24 @@ class DhscraperPipeline:
 
 
 class DuplicatesPipeline:
-    """Looks for duplicate items, and drops those items that were already processed
+    """Looks for duplicate items based on URL and year, and drops those items that were already processed.
+    Duplicate entries are removed when they occur within the Book of Abstracts for a specific conference.
+    However, if similar entries appear across the Books of Abstracts from different conferences,
+    they are not considered duplicates and are retained.
 
-    @ref: https://docs.scrapy.org/en/latest/topics/item-pipeline.html#duplicates-filter
+    Adapted from @ref: https://docs.scrapy.org/en/latest/topics/item-pipeline.html#duplicates-filter
     """
     def __init__(self):
         self.urls_seen = set()
 
     def process_item(self, item, spider):
         adapter = ItemAdapter(item)
+        year = adapter["year"]
         unique_urls = []
         for url in adapter["urls"]:
-            if url not in self.urls_seen:
-                self.urls_seen.add(url)
+            url_year = (url, year)
+            if url_year not in self.urls_seen:
+                self.urls_seen.add(url_year)
                 unique_urls.append(url)
         adapter["urls"] = unique_urls
         return item
