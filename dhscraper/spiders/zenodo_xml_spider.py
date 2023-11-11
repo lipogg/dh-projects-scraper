@@ -1,5 +1,7 @@
 from scrapy.spiders import XMLFeedSpider
 from dhscraper.items import DhscraperItem
+import logging
+from ..utils import extract_urls
 
 
 class ZenodoXMLSpider(XMLFeedSpider):
@@ -20,7 +22,16 @@ class ZenodoXMLSpider(XMLFeedSpider):
         item = DhscraperItem()
         item["origin"] = response.url
         item["abstract"] = node.xpath('@n').get()
-        item["urls"] = set(node.xpath('.//ref/@target', namespaces=self.namespaces).getall())
+        urls = set(node.xpath('.//ref/@target', namespaces=self.namespaces).getall()) #item["urls"] = set(...)
+        logging.debug('Attribute matches found: %s', urls)
+        item["urls"] = urls
+        # catch malformed urls: Several urls are not <ref> element attributes, but plain text in <p> or <bibl> elements
+        body_elems = node.xpath('.//p|.//bibl', namespaces=self.namespaces).getall()
+        body_text = ''.join(body_elems)
+        logging.debug('Body extracted: %s', body_text)
+        mf_urls = extract_urls(body_text)
+        logging.debug('String matches found: %s', mf_urls)
+        item["urls"].update(mf_urls)
         yield item
 
 
