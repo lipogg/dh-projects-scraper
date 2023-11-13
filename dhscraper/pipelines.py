@@ -48,6 +48,7 @@ class DhscraperPipeline:
                     and not validators.email(cleaned_url)  # exclude email addresses not preceded by mailto scheme
             ):
                 valid_urls.append(cleaned_url)
+        logging.debug("Cleaned or filtered out URLs: %s", list(set(adapter["urls"]) - set(valid_urls)))
         adapter["urls"] = valid_urls
 
     def get_path_length(self, adapter):
