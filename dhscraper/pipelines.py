@@ -16,8 +16,9 @@ class DhscraperPipeline:
     def process_item(self, item, spider):
         adapter = ItemAdapter(item)
         self.extract_year(adapter)
-        self.process_urls(adapter)
-        self.get_path_length(adapter)
+        if len(adapter["urls"]) > 0:
+            self.process_urls(adapter)
+            self.get_path_length(adapter)
         return item
 
     def extract_year(self, adapter):
@@ -87,13 +88,17 @@ class GoogleSheetsPipeline:
 
     def process_item(self, item, spider):
         adapter = ItemAdapter(item)
-        for i in range(len(adapter["urls"])):
-            row = [adapter["year"], adapter["origin"], adapter["abstract"], adapter["path_length"][i], adapter["urls"][i]]
-            self.rows.append(row)
+        num_urls = len(adapter["urls"])
+        if num_urls > 0:
+            for i in range(num_urls):
+                row = [adapter["year"], adapter["origin"], adapter["abstract"], adapter["path_length"][i], adapter["urls"][i], adapter.get("notes", "")]
+        else:
+            row = [adapter["year"], adapter["origin"], adapter["abstract"], "NaN", "NaN", adapter.get("notes", "")]
+        self.rows.append(row)
         return item
 
     def close_spider(self, spider):
-        header = ["Year", "Origin", "Abstract", "Path Length", "Project Url"]
+        header = ["Year", "Origin", "Abstract", "Path Length", "Project Url", "Notes"]
         if self.sh.acell("A1").value is None:  # this is not working! is None?
             self.sh.append_row(header)
         self.sh.append_rows(self.rows)
