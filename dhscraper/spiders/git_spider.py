@@ -3,6 +3,7 @@ from dhscraper.items import DhscraperItem
 from lxml import etree, html
 import json
 import logging
+from scrapy.spidermiddlewares.httperror import HttpError
 from ..utils import extract_urls
 
 
@@ -12,9 +13,9 @@ class GitSpider(scrapy.Spider):
     allowed_domains = ["api.github.com", "raw.githubusercontent.com"]
     start_urls = [#"https://api.github.com/repos/ADHO/dh2016/contents/xml",
                   #"https://api.github.com/repos/ADHO/dh2015/contents/xml",
-                  "https://api.github.com/repos/elliewix/DHAnalysis/contents/DH2014/abstracts",
+                  #"https://api.github.com/repos/elliewix/DHAnalysis/contents/DH2014/abstracts",
                   #"https://api.github.com/repos/ADHO/data_dh2013/contents/source/tei",
-                  #"https://api.github.com/repos/747/tei-to-pdf-dh2022/contents/input/files",
+                  "https://api.github.com/repos/747/tei-to-pdf-dh2022/contents/input/files",
                   #"https://api.github.com/repos/ADHO/dh2018/contents/xml/long-papers",
                   #"https://api.github.com/repos/ADHO/dh2018/contents/xml/panels",
                   #"https://api.github.com/repos/ADHO/dh2018/contents/xml/plenaries",
@@ -30,7 +31,11 @@ class GitSpider(scrapy.Spider):
         logging.info('Parse function called on %s', response.url)
         response_dict = json.loads(response.body)
         for item in response_dict:
-            yield scrapy.Request(item["download_url"], callback=self.parse_abstract, meta={"start_url": response.url})
+            download_url = item["download_url"]
+            if download_url is not None:
+                yield scrapy.Request(item["download_url"], callback=self.parse_abstract, errback=self.errback, meta={"start_url": response.url})
+            else:
+                logging.debug("No download URL found for item: %s", item)
 
     def parse_abstract(self, response):
         """
@@ -40,6 +45,7 @@ class GitSpider(scrapy.Spider):
         logging.debug('DhscraperItem created')
         item["origin"] = response.meta["start_url"]
         item["abstract"] = response.url
+        item["http_status"] = response.status
         xml_string = response.body
         urls = set()
 
@@ -56,7 +62,8 @@ class GitSpider(scrapy.Spider):
             logging.debug('Body element: %s', body_element)
         if body_element is not None:
             # extract well-formed urls
-            refs = root.findall(f'.//{{http://www.tei-c.org/ns/1.0}}{tag}') # refs = root.xpath(f'.//tei:{tag}', namespaces={'tei': 'http://www.tei-c.org/ns/1.0'}) - see if this solves the issua with 2013 abstract 300
+            refs = root.findall(f'.//{{http://www.tei-c.org/ns/1.0}}{tag}') # root.xpath('.//ref|.//ptr', namespaces={'tei': 'http://www.tei-c.org/ns/1.0'})#.getall() # refs = root.xpath(f'.//tei:{tag}', namespaces={'tei': 'http://www.tei-c.org/ns/1.0'}) - see if this solves the issua with 2013 abstract 300
+            # Add ptr as another tag!
             logging.debug('Ref elements found: %s', refs)
             wf_urls = {ref.attrib[attr_name] for ref in refs}
             urls.update(wf_urls)
@@ -71,3 +78,20 @@ class GitSpider(scrapy.Spider):
             item["notes"] = "Abstract missing"
         item["urls"] = urls
         yield item
+
+    def errback(self, failure):
+        """
+        handles failed requests not handled by the downloader middleware
+        """
+        logging.error(f'Failed to download {failure.request.url}: {failure.value}')
+        item = DhscraperItem()
+        item["origin"] = failure.request.meta["start_url"]
+        item["abstract"] = failure.request.url
+        item["urls"] = set()
+        item["notes"] = str(failure.value)
+        if failure.check(HttpError):
+            item["http_status"] = failure.value.response.status
+            logging.info(f'Failed with http status code: %s', failure.value.response.status)
+        yield item
+
+

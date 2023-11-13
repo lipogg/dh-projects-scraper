@@ -91,14 +91,15 @@ class GoogleSheetsPipeline:
         num_urls = len(adapter["urls"])
         if num_urls > 0:
             for i in range(num_urls):
-                row = [adapter["year"], adapter["origin"], adapter["abstract"], adapter["path_length"][i], adapter["urls"][i], adapter.get("notes", "")]
+                row = [adapter["year"], adapter["origin"], adapter["abstract"], adapter["path_length"][i], adapter["urls"][i], adapter.get("notes", ""), adapter["http_status"]]
+                self.rows.append(row)
         else:
-            row = [adapter["year"], adapter["origin"], adapter["abstract"], "NaN", "NaN", adapter.get("notes", "")]
-        self.rows.append(row)
+            row = [adapter["year"], adapter["origin"], adapter["abstract"], "NaN", "NaN", adapter.get("notes", ""), adapter["http_status"]]
+            self.rows.append(row)
         return item
 
     def close_spider(self, spider):
-        header = ["Year", "Origin", "Abstract", "Path Length", "Project Url", "Notes"]
+        header = ["Year", "Origin", "Abstract", "Path Length", "Project Url", "Notes", "HTTP Status"]
         if self.sh.acell("A1").value is None:  # this is not working! is None?
             self.sh.append_row(header)
         self.sh.append_rows(self.rows)

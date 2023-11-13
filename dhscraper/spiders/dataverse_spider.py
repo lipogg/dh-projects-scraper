@@ -4,6 +4,7 @@ import json
 import fitz
 import io
 import logging
+from scrapy.spidermiddlewares.httperror import HttpError
 from ..utils import extract_urls
 
 
@@ -24,7 +25,11 @@ class DataverseSpider(scrapy.Spider):
         """
         response_dict = json.loads(response.body)
         for item in response_dict["data"]["items"]:
-            yield scrapy.Request(item["url"], callback=self.parse_abstract, meta={"start_url": response.url})
+            url = item["url"]
+            if url is not None:
+                yield scrapy.Request(url, callback=self.parse_abstract, errback=self.errback, meta={"start_url": response.url})
+            else:
+                logging.debug("No download URL found for item: %s", item)
 
     def parse_abstract(self, response):
         """
@@ -44,4 +49,19 @@ class DataverseSpider(scrapy.Spider):
         mf_urls = extract_urls(abstract)
         logging.debug('String matches found: %s', mf_urls)
         item["urls"].update(mf_urls)
+        yield item
+
+    def errback(self, failure):
+        """
+        handles failed requests not handled by the downloader middleware
+        """
+        logging.error(f'Failed to download {failure.request.url}: {failure.value}')
+        item = DhscraperItem()
+        item["origin"] = failure.request.meta["start_url"]
+        item["abstract"] = failure.request.url
+        item["urls"] = set()
+        item["notes"] = str(failure.value)
+        if failure.check(HttpError):
+            item["http_status"] = failure.value.response.status
+            logging.info(f'Failed with http status code: %s', failure.value.response.status)
         yield item
