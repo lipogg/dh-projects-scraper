@@ -9,6 +9,7 @@ from itemadapter import ItemAdapter
 from tldextract import extract
 from urllib.parse import urlparse
 import validators
+import logging
 
 
 class DhscraperPipeline:
@@ -76,6 +77,7 @@ class DuplicatesPipeline:
             if url_year not in self.urls_seen:
                 self.urls_seen.add(url_year)
                 unique_urls.append(url)
+        logging.debug('Duplicates removed: %s', list(set(adapter["urls"]) - set(unique_urls)))
         adapter["urls"] = unique_urls
         return item
 
@@ -100,6 +102,6 @@ class GoogleSheetsPipeline:
 
     def close_spider(self, spider):
         header = ["Year", "Origin", "Abstract", "Path Length", "Project Url", "Notes", "HTTP Status"]
-        if len(self.sh.get_all_values()) == 0:  # this is not working! is None?
+        if len(self.sh.get_all_values()) == 0:
             self.sh.append_row(header)
         self.sh.append_rows(self.rows)
