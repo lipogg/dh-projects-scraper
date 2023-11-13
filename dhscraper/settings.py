@@ -53,9 +53,19 @@ DOWNLOAD_DELAY = 1
 
 # Enable or disable downloader middlewares
 # See https://docs.scrapy.org/en/latest/topics/downloader-middleware.html
-#DOWNLOADER_MIDDLEWARES = {
+DOWNLOADER_MIDDLEWARES = {
 #    "dhscraper.middlewares.DhscraperDownloaderMiddleware": 543,
-#}
+    'scrapy.downloadermiddlewares.retry.RetryMiddleware': 550,
+    'scrapy.downloadermiddlewares.redirect.RedirectMiddleware': 600,
+}
+
+# Retry settings
+RETRY_ENABLED = True
+RETRY_TIMES = 2  # How many times to retry, adjust as needed
+RETRY_HTTP_CODES = [500, 502, 503, 504, 522, 524, 408, 429]  # Include any additional HTTP codes you want to retry on
+
+# Redirect settings
+REDIRECT_ENABLED = True
 
 # Enable or disable extensions
 # See https://docs.scrapy.org/en/latest/topics/extensions.html
