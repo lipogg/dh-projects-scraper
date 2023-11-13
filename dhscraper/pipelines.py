@@ -100,6 +100,6 @@ class GoogleSheetsPipeline:
 
     def close_spider(self, spider):
         header = ["Year", "Origin", "Abstract", "Path Length", "Project Url", "Notes", "HTTP Status"]
-        if self.sh.acell("A1").value is None:  # this is not working! is None?
+        if len(self.sh.get_all_values()) == 0:  # this is not working! is None?
             self.sh.append_row(header)
         self.sh.append_rows(self.rows)
