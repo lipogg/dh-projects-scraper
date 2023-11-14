@@ -22,6 +22,7 @@ class ZenodoTXTSpider(scrapy.Spider):
         logging.debug('DhscraperItem created')
         item["origin"] = response.url
         item["abstract"] = "NaN"
+        item["http_status"] = response.status
         abstract = response.text
         item["urls"] = extract_urls(abstract)
         logging.info('Item ready to be yielded')
