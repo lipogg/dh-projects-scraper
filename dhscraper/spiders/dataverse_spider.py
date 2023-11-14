@@ -38,14 +38,16 @@ class DataverseSpider(scrapy.Spider):
         item = DhscraperItem()
         item["abstract"] = response.url
         item["origin"] = response.meta["start_url"]
+        item["http_status"] = response.status
         filestream = io.BytesIO(response.body)
         pdf = fitz.open(stream=filestream, filetype="pdf")
-        urls = {elem['uri'] for page in pdf for elem in page.get_links() if 'uri' in elem} # set comprehension to remove duplicates derived from malformatted hyperlinks
+        # extract well-formed urls
+        urls = {elem['uri'] for page in pdf for elem in page.get_links() if 'uri' in elem}
         logging.debug('Attribute matches found: %s', urls)
         item["urls"] = urls
         # catch malformed urls: some urls may not be hyperlinks
         abstract = ''.join(page.get_text() for page in pdf)
-        logging.debug('Abstract text: %s', abstract)
+        #logging.debug('Abstract text: %s', abstract)
         mf_urls = extract_urls(abstract)
         logging.debug('String matches found: %s', mf_urls)
         item["urls"].update(mf_urls)
@@ -65,3 +67,4 @@ class DataverseSpider(scrapy.Spider):
             item["http_status"] = failure.value.response.status
             logging.info(f'Failed with http status code: %s', failure.value.response.status)
         yield item
+

@@ -4,6 +4,7 @@ import logging
 from scrapy.spidermiddlewares.httperror import HttpError
 from ..utils import extract_urls
 
+
 class AdhoSpider(scrapy.Spider):
     """identify the spider"""
     name = "adho_website"
@@ -27,6 +28,7 @@ class AdhoSpider(scrapy.Spider):
         item["abstract"] = response.url
         item["http_status"] = response.status
         abstract = response.xpath("//*[@id='index.xml-body.1_div.1']").get()
+        #logging.debug('Abstract text: %s', abstract)
         item["urls"] = extract_urls(abstract)
         logging.info('Item ready to be yielded')
         yield item
