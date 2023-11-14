@@ -13,9 +13,9 @@ class GitSpider(scrapy.Spider):
     allowed_domains = ["api.github.com", "raw.githubusercontent.com"]
     start_urls = [#"https://api.github.com/repos/ADHO/dh2016/contents/xml",
                   #"https://api.github.com/repos/ADHO/dh2015/contents/xml",
-                  #"https://api.github.com/repos/elliewix/DHAnalysis/contents/DH2014/abstracts",
+                  "https://api.github.com/repos/elliewix/DHAnalysis/contents/DH2014/abstracts",
                   #"https://api.github.com/repos/ADHO/data_dh2013/contents/source/tei",
-                  "https://api.github.com/repos/747/tei-to-pdf-dh2022/contents/input/files",
+                  #"https://api.github.com/repos/747/tei-to-pdf-dh2022/contents/input/files",
                   #"https://api.github.com/repos/ADHO/dh2018/contents/xml/long-papers",
                   #"https://api.github.com/repos/ADHO/dh2018/contents/xml/panels",
                   #"https://api.github.com/repos/ADHO/dh2018/contents/xml/plenaries",
@@ -38,9 +38,6 @@ class GitSpider(scrapy.Spider):
                 logging.debug("No download URL found for item: %s", item)
 
     def parse_abstract(self, response):
-        """
-        handles the response downloaded for each of the requests made: extracts links to dh projects from abstract xml files
-        """
         item = DhscraperItem()
         logging.debug('DhscraperItem created')
         item["origin"] = response.meta["start_url"]
@@ -49,33 +46,40 @@ class GitSpider(scrapy.Spider):
         xml_string = response.body
         urls = set()
 
-        if "DH2014" in response.meta["start_url"]:
-            root = html.fromstring(xml_string)
-            tag, attr_name = ('a', 'href')
-            body_elements = root.xpath('//*[contains(@xmlns, "http://www.tei-c.org/ns/1.0")]')
-            body_element = body_elements[0] if body_elements else None
-            logging.debug('Body element: %s', body_element)
-        else:
-            root = etree.fromstring(xml_string)
-            tag, attr_name = ('ref', 'target')
-            body_element = root.find('.//{http://www.tei-c.org/ns/1.0}body') # use root.xpath here as well?
-            logging.debug('Body element: %s', body_element)
-        if body_element is not None:
-            # extract well-formed urls
-            refs = root.findall(f'.//{{http://www.tei-c.org/ns/1.0}}{tag}') # root.xpath('.//ref|.//ptr', namespaces={'tei': 'http://www.tei-c.org/ns/1.0'})#.getall() # refs = root.xpath(f'.//tei:{tag}', namespaces={'tei': 'http://www.tei-c.org/ns/1.0'}) - see if this solves the issua with 2013 abstract 300
-            # Add ptr as another tag!
-            logging.debug('Ref elements found: %s', refs)
-            wf_urls = {ref.attrib[attr_name] for ref in refs}
-            urls.update(wf_urls)
-            logging.debug('Attribute matches found: %s', urls)
-            # catch malformed urls: Several urls are not <ref> element attributes, but plain text in <p>, <item> or <bibl> elements
-            body_text = ''.join(body_element.itertext()) #   Error if except was called for body_element = ...
-            mf_urls = extract_urls(body_text)
-            logging.debug('String matches found: %s', mf_urls)
-            urls.update(mf_urls)
-        else: # 919, 894, 879, 867, 861, ...
-            logging.error('No element with xmlns attribute found: Document potentially empty')
+        # Determine root and setup for different cases: 2014 BOA is nested in html
+        dh2014_in_url = "DH2014" in response.meta["start_url"]
+        root = html.fromstring(xml_string) if dh2014_in_url else etree.fromstring(xml_string)
+        namespace = "" if dh2014_in_url else "{http://www.tei-c.org/ns/1.0}"
+
+        # Define the parent and child elements to process: non-2014 BOAs have separate back element for bibliography
+        elements_tpl = [('article', 'a' if dh2014_in_url else 'ref')] #body
+        if not dh2014_in_url:
+            elements_tpl.append(('back', 'ptr')) # evtl nicht notwendig: nicht-2014 boas haben ein äußeres text elem, das body und back beinhaltet
+
+        # Process parent child tuples and flag found parent elements to detect empty abstracts
+        parent_found = False
+        for (parent, child) in elements_tpl:
+            parent_elem = root.find(f'.//{namespace}{parent}') # funktioniert, aber ggf. header aus article ausschließen: allerdings: wird das bei anderen boas auch gemacht?
+            logging.debug('Parent found: %s', parent_elem)
+            if parent_elem is not None:
+                parent_found = True
+                # Extract well-formed URLs
+                attr_name = 'href' if child == 'a' else 'target'
+                child_elems = root.findall(f'.//{namespace}{child}')
+                logging.debug('Children found: %s', child_elems)
+                wf_urls = {child.attrib[attr_name] for child in child_elems}
+                urls.update(wf_urls)
+                logging.debug(f'Attribute matches found in {child}: {wf_urls}')
+
+                # Catch malformed URLs
+                mf_urls = extract_urls(''.join(parent_elem.itertext()))
+                urls.update(mf_urls)
+                logging.debug(f'String matches found in {parent}: {mf_urls}')
+
+        if not parent_found: # are there empty abstracts that contain body elements?
             item["notes"] = "Abstract missing"
+            logging.error(f'No {parent} element with xmlns attribute found: Document potentially empty')
+
         item["urls"] = urls
         yield item
 
