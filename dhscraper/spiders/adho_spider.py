@@ -27,7 +27,9 @@ class AdhoSpider(scrapy.Spider):
         item["origin"] = response.meta["start_url"]
         item["abstract"] = response.url
         item["http_status"] = response.status
-        abstract = response.xpath("//*[@id='index.xml-body.1_div.1']").get()
+        abstract = response.xpath("//*[@id='index.xml-body.1_div.1']").get()  # returns None if no elements are found
+        if abstract is None:
+            item["notes"] = "Abstract missing"
         #logging.debug('Abstract text: %s', abstract)
         item["urls"] = extract_urls(abstract)
         logging.info('Item ready to be yielded')
