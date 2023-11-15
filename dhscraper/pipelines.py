@@ -31,7 +31,7 @@ class DhscraperPipeline:
                            "cidoc-crm", "jstor", "zotero", "researchgate", "gephi",
                            "zenodo", "culturalanalytics", "nature", "medium", "twitter",
                            "reddit", "arxiv", "journalofdigitalhumanities", "youtube",
-                           "theguardian", "sciencedirect", "archives-ouvertes"]
+                           "theguardian", "sciencedirect", "archives-ouvertes", "google"]
         exclude_subdomains = ["journals"]
         adapter["urls"] = list(adapter["urls"])  # convert set to list
         pattern_end = r'[\./\):]+$|\([^)]+$|\((A|accessed).*|\s*$'  # match any combination of /, ), : and . or open brackets at the end of a sentence, and any trailing whitespace
