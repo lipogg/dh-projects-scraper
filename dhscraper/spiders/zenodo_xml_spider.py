@@ -23,15 +23,19 @@ class ZenodoXMLSpider(XMLFeedSpider):
         item["origin"] = response.url
         item["abstract"] = node.xpath('@n').get()
         item["http_status"] = response.status
-        urls = set(node.xpath('.//ref/@target', namespaces=self.namespaces).getall())  # returns empty set if no elements are matched
+        urls = set(node.xpath('.//ref/@target', namespaces=self.namespaces).getall())  # .getall() returns empty list if no elements are matched
         logging.debug('Attribute matches found: %s', urls)
         # catch malformed urls: Several urls are not <ref> element attributes, but plain text in <p> or <bibl> elements
-        body_elems = node.xpath('.//p|.//bibl', namespaces=self.namespaces).getall()
-        body_text = ''.join(body_elems)
-        #logging.debug('Body extracted: %s', body_text)
-        mf_urls = extract_urls(body_text)
-        logging.debug('String matches found: %s', mf_urls)
-        urls.update(mf_urls)
+        # statt p und bibl body und back wie bei gitspider
+        abstract_elems = node.xpath('.//body//text()|.//back//text()', namespaces=self.namespaces).getall() # returns an emtpy list if no elements are found
+        abstract_text = ''.join(abstract_elems)
+        # logging.debug('Body extracted: %s', body_text)
+        if len(abstract_text) >= 100:
+            mf_urls = extract_urls(abstract_text)
+            logging.debug('String matches found: %s', mf_urls)
+            urls.update(mf_urls)
+        else:
+            item["notes"] = "Abstract missing"
         item["urls"] = urls
         yield item
 
