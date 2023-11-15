@@ -40,17 +40,30 @@ class DataverseSpider(scrapy.Spider):
         item["origin"] = response.meta["start_url"]
         item["http_status"] = response.status
         filestream = io.BytesIO(response.body)
-        pdf = fitz.open(stream=filestream, filetype="pdf")
-        # extract well-formed urls
-        urls = {elem['uri'] for page in pdf for elem in page.get_links() if 'uri' in elem}
-        logging.debug('Attribute matches found: %s', urls)
+        urls = set()
+        try:
+            pdf = fitz.open(stream=filestream, filetype="pdf")
+        except (TypeError, ValueError) as e:
+            logging.error(f"Error opening PDF (invalid parameter or file type): {e}")
+            item["notes"] = "Error processing PDF: Invalid parameter or file type"
+        except RuntimeError as e:  # This catches FileNotFoundError, EmptyFileError, and FileDataError
+            logging.error(f"Error opening PDF (runtime error): {e}")
+            item["notes"] = "Error processing PDF: Runtime error"
+        else:
+            # extract well-formed urls
+            wf_urls = {elem['uri'] for page in pdf for elem in page.get_links() if 'uri' in elem}
+            logging.debug('Attribute matches found: %s', wf_urls)
+            urls.update(wf_urls)
+            # catch malformed urls: some urls may not be hyperlinks
+            abstract_text = ''.join(page.get_text() for page in pdf)
+            #logging.debug('Abstract text: %s', abstract)
+            if len(abstract_text) >= 100:
+                mf_urls = extract_urls(abstract_text)
+                logging.debug('String matches found: %s', mf_urls)
+                urls.update(mf_urls)
+            else:
+                item["notes"] = "Abstract missing"
         item["urls"] = urls
-        # catch malformed urls: some urls may not be hyperlinks
-        abstract = ''.join(page.get_text() for page in pdf)
-        #logging.debug('Abstract text: %s', abstract)
-        mf_urls = extract_urls(abstract)
-        logging.debug('String matches found: %s', mf_urls)
-        item["urls"].update(mf_urls)
         yield item
 
     def errback(self, failure):
