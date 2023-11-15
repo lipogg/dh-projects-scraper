@@ -52,33 +52,38 @@ class GitSpider(scrapy.Spider):
         namespace = "" if dh2014_in_url else "{http://www.tei-c.org/ns/1.0}"
 
         # Define the parent and child elements to process: non-2014 BOAs have separate back element for bibliography
-        elements_tpl = [('article', 'a' if dh2014_in_url else 'ref')] #body
-        if not dh2014_in_url:
-            elements_tpl.append(('back', 'ptr')) # evtl nicht notwendig: nicht-2014 boas haben ein äußeres text elem, das body und back beinhaltet
+        parent_tags = ['article', 'body', 'back']
+        child_tags = ['a', 'ref', 'ptr']
 
         # Process parent child tuples and flag found parent elements to detect empty abstracts
         parent_found = False
-        for (parent, child) in elements_tpl:
-            parent_elem = root.find(f'.//{namespace}{parent}') # funktioniert, aber ggf. header aus article ausschließen: allerdings: wird das bei anderen boas auch gemacht?
+        abstract_empty = True
+        for parent_tag in parent_tags:
+            parent_elem = root.find(f'.//{namespace}{parent_tag}')
             logging.debug('Parent found: %s', parent_elem)
+
             if parent_elem is not None:
                 parent_found = True
-                # Extract well-formed URLs
-                attr_name = 'href' if child == 'a' else 'target'
-                child_elems = root.findall(f'.//{namespace}{child}')
-                logging.debug('Children found: %s', child_elems)
-                wf_urls = {child.attrib[attr_name] for child in child_elems}
-                urls.update(wf_urls)
-                logging.debug(f'Attribute matches found in {child}: {wf_urls}')
+                for child_tag in child_tags:
+                    # Extract well-formed URLs
+                    attr_name = 'href' if child_tag == 'a' else 'target'
+                    child_elems = parent_elem.findall(f'.//{namespace}{child_tag}') # root.findall
+                    logging.debug('Children found: %s', child_elems)
+                    wf_urls = {child.attrib[attr_name] for child in child_elems if attr_name in child.attrib}
+                    urls.update(wf_urls)
+                    logging.debug(f'Attribute matches found in {child_tag} element: {wf_urls}')
 
                 # Catch malformed URLs
-                mf_urls = extract_urls(''.join(parent_elem.itertext()))
+                abstract_text = ''.join(parent_elem.itertext())
+                if len(abstract_text) >= 100:
+                    abstract_empty = False
+                mf_urls = extract_urls(abstract_text)
                 urls.update(mf_urls)
-                logging.debug(f'String matches found in {parent}: {mf_urls}')
+                logging.debug(f'String matches found in {parent_tag} element: {mf_urls}')
 
-        if not parent_found: # are there empty abstracts that contain body elements?
+        if not parent_found or abstract_empty:
             item["notes"] = "Abstract missing"
-            logging.error(f'No {parent} element with xmlns attribute found: Document potentially empty')
+            logging.error(f'Document potentially empty')
 
         item["urls"] = urls
         yield item
