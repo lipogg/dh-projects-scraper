@@ -11,17 +11,17 @@ class GitSpider(scrapy.Spider):
     """identify the spider"""
     name = "github"
     allowed_domains = ["api.github.com", "raw.githubusercontent.com"]
-    start_urls = [#"https://api.github.com/repos/ADHO/dh2016/contents/xml",
-                  #"https://api.github.com/repos/ADHO/dh2015/contents/xml",
+    start_urls = ["https://api.github.com/repos/ADHO/dh2016/contents/xml",
+                  "https://api.github.com/repos/ADHO/dh2015/contents/xml",
                   "https://api.github.com/repos/elliewix/DHAnalysis/contents/DH2014/abstracts",
-                  #"https://api.github.com/repos/ADHO/data_dh2013/contents/source/tei",
-                  #"https://api.github.com/repos/747/tei-to-pdf-dh2022/contents/input/files",
-                  #"https://api.github.com/repos/ADHO/dh2018/contents/xml/long-papers",
-                  #"https://api.github.com/repos/ADHO/dh2018/contents/xml/panels",
-                  #"https://api.github.com/repos/ADHO/dh2018/contents/xml/plenaries",
-                  #"https://api.github.com/repos/ADHO/dh2018/contents/xml/posters",
-                  #"https://api.github.com/repos/ADHO/dh2018/contents/xml/short-papers",
-                  #"https://api.github.com/repos/ADHO/dh2018/contents/xml/workshops",
+                  "https://api.github.com/repos/ADHO/data_dh2013/contents/source/tei",
+                  "https://api.github.com/repos/747/tei-to-pdf-dh2022/contents/input/files",
+                  "https://api.github.com/repos/ADHO/dh2018/contents/xml/long-papers",
+                  "https://api.github.com/repos/ADHO/dh2018/contents/xml/panels",
+                  "https://api.github.com/repos/ADHO/dh2018/contents/xml/plenaries",
+                  "https://api.github.com/repos/ADHO/dh2018/contents/xml/posters",
+                  "https://api.github.com/repos/ADHO/dh2018/contents/xml/short-papers",
+                  "https://api.github.com/repos/ADHO/dh2018/contents/xml/workshops",
                   ]
 
     def parse(self, response):

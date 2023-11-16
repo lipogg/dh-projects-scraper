@@ -1,4 +1,3 @@
-from dhscraper.spiders.wayback_spider import WaybackSpider
 from dhscraper.spiders.zenodo_xml_spider import ZenodoXMLSpider
 from dhscraper.spiders.zenodo_txt_spider import ZenodoTXTSpider
 from dhscraper.spiders.git_spider import GitSpider
@@ -16,7 +15,6 @@ def main():
     process.crawl(ZenodoTXTSpider)
     process.crawl(DataverseSpider)
     process.crawl(GitSpider)
-    process.crawl(WaybackSpider)
     process.start()
 
 
