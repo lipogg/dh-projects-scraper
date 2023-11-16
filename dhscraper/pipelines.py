@@ -31,16 +31,18 @@ class DhscraperPipeline:
                            "cidoc-crm", "jstor", "zotero", "researchgate", "gephi",
                            "zenodo", "culturalanalytics", "nature", "medium", "twitter",
                            "reddit", "arxiv", "journalofdigitalhumanities", "youtube",
-                           "theguardian", "sciencedirect", "archives-ouvertes", "google"]
+                           "theguardian", "sciencedirect", "archives-ouvertes"]
         exclude_subdomains = ["journals"]
         adapter["urls"] = list(adapter["urls"])  # convert set to list
-        pattern_end = r'[\./\):]+$|\([^)]+$|\((A|accessed).*|\s*$'  # match any combination of /, ), : and . or open brackets at the end of a sentence, and any trailing whitespace
+        pattern_end = r'[\./\):]+$|\([^)]+$|/?\((A|accessed).*|\s*$'  # match any combination of /, ), : and . or open brackets, (Accessed or /(Accessed at the end of a sentence, and any trailing whitespace
         pattern_newline = r'(\-?(\n|\r)|\s)'  # match \n or \r optionally preceded by -, and whitespace anywhere in the url
+        pattern_start = r'^.*?http'  # lazy match any characters before the first occurrence of http
         valid_urls = []
 
         for url in adapter["urls"]:
             logging.debug('Current URL is: %s', url)
-            cleaned_url = re.sub(pattern_end, "", url)
+            pre_cleaned_url = re.sub(pattern_end, "", url)
+            cleaned_url = re.sub(pattern_start, 'http', pre_cleaned_url) #flags=re.IGNORECASE
             newline_free_url = re.sub(pattern_newline, "", cleaned_url)
             url_parts = extract(newline_free_url)
             suffix = url_parts.suffix  # returns "" if no suffix is found
@@ -134,5 +136,5 @@ class GoogleSheetsPipeline:
         header = ["Year", "Origin", "Abstract", "Path Length", "Project Url", "Notes", "HTTP Status"]
         if len(self.sh.get_all_values()) == 0:
             self.sh.append_row(header)
-        logging.debug(f'Appended {len(self.rows)} to Google Sheets.')
+        logging.debug(f'Appended {len(self.rows)} rows to Google Sheets.')
         self.sh.append_rows(self.rows)
