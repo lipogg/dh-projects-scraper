@@ -19,7 +19,6 @@ class DhscraperPipeline:
         self.extract_year(adapter)
         if len(adapter["urls"]) > 0:
             self.process_urls(adapter)
-            self.get_path_length(adapter)
         return item
 
     def extract_year(self, adapter):
@@ -82,12 +81,6 @@ class DhscraperPipeline:
         logging.debug("Cleaned or filtered out URLs: %s", list(set(adapter["urls"]) - set(valid_urls)))
         adapter["urls"] = valid_urls
 
-    def get_path_length(self, adapter):
-        adapter["path_length"] = []
-        for url in adapter["urls"]:
-            url_path = urlparse(url).path
-            adapter["path_length"].append(len(re.findall("/", url_path)))
-
 
 class DuplicatesPipeline:
     """Looks for duplicate items based on URL and year, and drops those items that were already processed.
@@ -125,15 +118,15 @@ class GoogleSheetsPipeline:
         num_urls = len(adapter["urls"])
         if num_urls > 0:
             for i in range(num_urls):
-                row = [adapter["year"], adapter["origin"], adapter["abstract"], adapter["path_length"][i], adapter["urls"][i], adapter.get("notes", ""), adapter["http_status"]]
+                row = [adapter["year"], adapter["origin"], adapter["abstract"], adapter["urls"][i], adapter.get("notes", ""), adapter["http_status"]]
                 self.rows.append(row)
         else:
-            row = [adapter["year"], adapter["origin"], adapter["abstract"], "NaN", "NaN", adapter.get("notes", ""), adapter["http_status"]]
+            row = [adapter["year"], adapter["origin"], adapter["abstract"], "NaN", adapter.get("notes", ""), adapter["http_status"]]
             self.rows.append(row)
         return item
 
     def close_spider(self, spider):
-        header = ["Year", "Origin", "Abstract", "Path Length", "Project Url", "Notes", "HTTP Status"]
+        header = ["Year", "Origin", "Abstract", "Project Url", "Notes", "HTTP Status"]
         if len(self.sh.get_all_values()) == 0:
             self.sh.append_row(header)
         logging.debug(f'Appended {len(self.rows)} rows to Google Sheets.')
