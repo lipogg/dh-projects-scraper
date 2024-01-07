@@ -4,6 +4,12 @@ import logging
 
 
 def extract_urls(abstract):
+    """
+    Extracts URLs from the provided abstract text using regular expressions.
+
+    This function searches for URLs in the given abstract text based on a predefined URL_PATTERN regular expression.
+    It extracts complete URLs, including any continuation of the path split across lines, and returns them in a set.
+    """
     logging.debug('URL pattern: %s', URL_PATTERN)
     extracted_urls = set()
 

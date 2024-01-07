@@ -6,7 +6,7 @@ from ..utils import extract_urls
 
 
 class ZenodoTXTSpider(scrapy.Spider):
-    """identify the spider"""
+
     name = "zenodo_txt"
     allowed_domains = ["zenodo.org"]
     start_urls = [
@@ -15,8 +15,13 @@ class ZenodoTXTSpider(scrapy.Spider):
 
     def parse(self, response):
         """
-        handles the response downloaded for each of the requests made
+        Extracts data from the response object for each URL in the start_urls list.
+
+        This method is called for the response object received for the request made for the URL in the
+        start_urls list. It extracts the HTTP status code for the response, the originating URL,
+        and any URLs found within the response text. URLs are extracted from plain text.
         """
+
         logging.info('Parse function called on %s', response.url)
         item = DhscraperItem()
         logging.debug('DhscraperItem created')

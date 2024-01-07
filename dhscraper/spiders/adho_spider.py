@@ -6,7 +6,7 @@ from ..utils import extract_urls
 
 
 class AdhoSpider(scrapy.Spider):
-    """identify the spider"""
+
     name = "adho_website"
     allowed_domains = ["dh2020.adho.org"]
     start_urls = [
@@ -15,13 +15,20 @@ class AdhoSpider(scrapy.Spider):
 
     def parse(self, response):
         """
-        handles the response downloaded for the request made for the start url
+        Initiates requests for the URLs to abstract pages extracted from the website in the start_urls list.
+
+        This method is called for the response object received for the request made for the URL in the
+        start_urls list. It extracts and follows all links to individual abstract pages found on the main page,
+        calling `parse_abstract` as the callback method and `errback` if the request returns an HTTP error code.
         """
         yield from response.follow_all(xpath="//*[@id='tablepress-9']/tbody/tr/td/a", callback=self.parse_abstract, errback=self.errback, meta={"start_url": response.url})
 
     def parse_abstract(self, response):
         """
-        handles the response downloaded for each of the requests made: extracts links to dh projects from abstract web pages
+        Extracts data from the response object for each of the requests made in the parse method.
+
+        This method extracts the HTTP status code for the response, the originating URL, the abstract URL, and any URLs
+        found within the response text. URLs are extracted from plain text. Potentially empty abstracts are flagged.
         """
         item = DhscraperItem()
         item["origin"] = response.meta["start_url"]
@@ -37,7 +44,10 @@ class AdhoSpider(scrapy.Spider):
 
     def errback(self, failure):
         """
-        handles failed requests not handled by the downloader middleware
+        Handles failed requests detected by the httperror middleware.
+
+        This method is invoked when a request generates an error (e.g., connection issues, HTTP error responses).
+        It logs the error and yields an item containing details about the failed request.
         """
         logging.error(f'Failed to download {failure.request.url}: {failure.value}')
         item = DhscraperItem()

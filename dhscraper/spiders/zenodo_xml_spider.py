@@ -5,7 +5,7 @@ from ..utils import extract_urls
 
 
 class ZenodoXMLSpider(XMLFeedSpider):
-    """identify the spider"""
+
     name = "zenodo_xml"
     allowed_domains = ["zenodo.org"]
     start_urls = [
@@ -17,8 +17,13 @@ class ZenodoXMLSpider(XMLFeedSpider):
 
     def parse_node(self, response, node):
         """
-        handles the response downloaded for the request made for the start url
+        Extracts and processes data from each XML node in the feed.
+
+        This method is called for each 'TEI' node in the XML feed. It extracts the HTTP status code for the response,
+        the abstract identifier, the originating URL, and any URLs found within the element. URLs are extracted both from
+        XML node attributes and from plain text within certain elements. Potentially empty abstracts are flagged.
         """
+
         item = DhscraperItem()
         item["origin"] = response.url
         item["abstract"] = node.xpath('@n').get()

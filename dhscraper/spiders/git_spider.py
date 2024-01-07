@@ -8,7 +8,7 @@ from ..utils import extract_urls
 
 
 class GitSpider(scrapy.Spider):
-    """identify the spider"""
+
     name = "github"
     allowed_domains = ["api.github.com", "raw.githubusercontent.com"]
     start_urls = ["https://api.github.com/repos/ADHO/dh2016/contents/xml",
@@ -26,7 +26,12 @@ class GitSpider(scrapy.Spider):
 
     def parse(self, response):
         """
-        handles the response downloaded for each of the requests made
+        Parses the JSON response from GitHub API and initiates requests for each file URL.
+
+        This method is called for the response object received for the request made for the URL in the
+        start_urls list. It processes the JSON response from the GitHub API, extracting URLs for individual XML files.
+        It then initiates a Scrapy request for each file URL, calling `parse_abstract` as the callback method and
+        `errback` if the request returns an HTTP error code.
         """
         logging.info('Parse function called on %s', response.url)
         response_dict = json.loads(response.body)
@@ -38,6 +43,13 @@ class GitSpider(scrapy.Spider):
                 logging.debug("No download URL found for item: %s", item)
 
     def parse_abstract(self, response):
+        """
+        Extracts data from the response object for each of the requests made in the parse method.
+
+        This method extracts the HTTP status code for the response, the originating URL, the abstract URL, and any URLs
+        found within the response text. Abstracts from different years are handled individually. URLs are extracted both
+        from XML element attributes and from plain text within certain elements. Potentially empty abstracts are flagged.
+        """
         item = DhscraperItem()
         logging.debug('DhscraperItem created')
         item["origin"] = response.meta["start_url"]
@@ -90,7 +102,10 @@ class GitSpider(scrapy.Spider):
 
     def errback(self, failure):
         """
-        handles failed requests not handled by the downloader middleware
+        Handles failed requests detected by the httperror middleware.
+
+        This method is invoked when a request generates an error (e.g., connection issues, HTTP error responses).
+        It logs the error and yields an item containing details about the failed request.
         """
         logging.error(f'Failed to download {failure.request.url}: {failure.value}')
         item = DhscraperItem()
