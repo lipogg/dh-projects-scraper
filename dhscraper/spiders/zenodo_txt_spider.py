@@ -4,9 +4,7 @@ import logging
 from ..utils import extract_urls
 
 
-
 class ZenodoTXTSpider(scrapy.Spider):
-
     name = "zenodo_txt"
     allowed_domains = ["zenodo.org"]
     start_urls = [
@@ -22,18 +20,13 @@ class ZenodoTXTSpider(scrapy.Spider):
         and any URLs found within the response text. URLs are extracted from plain text.
         """
 
-        logging.info('Parse function called on %s', response.url)
+        logging.info("Parse function called on %s", response.url)
         item = DhscraperItem()
-        logging.debug('DhscraperItem created')
+        logging.debug("DhscraperItem created")
         item["origin"] = response.url
         item["abstract"] = "NaN"
         item["http_status"] = response.status
         abstract = response.text
         item["urls"] = extract_urls(abstract)
-        logging.info('Item ready to be yielded')
+        logging.info("Item ready to be yielded")
         yield item
-
-
-
-
-
