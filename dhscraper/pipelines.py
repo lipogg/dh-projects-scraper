@@ -28,7 +28,6 @@ class DhscraperPipeline:
 
     def process_urls(self, adapter):
         exclude_domains = [
-            "doi",
             "tei-c",
             "w3",
             "wikipedia",
@@ -39,7 +38,6 @@ class DhscraperPipeline:
             "zotero",
             "researchgate",
             "gephi",
-            "zenodo",
             "culturalanalytics",
             "nature",
             "medium",
