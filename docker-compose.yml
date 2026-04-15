@@ -1,0 +1,17 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: scrapy_postgres
+
+    env_file:
+      - .env
+
+    ports:
+      - "127.0.0.1:5432:5432"
+
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./init_sql:/docker-entrypoint-initdb.d
+
+volumes:
+  pgdata:

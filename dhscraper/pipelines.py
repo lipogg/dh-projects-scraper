@@ -3,6 +3,7 @@
 # Don't forget to add your pipeline to the ITEM_PIPELINES setting
 # See: https://docs.scrapy.org/en/latest/topics/item-pipeline.html
 
+import os
 import gspread
 import re
 from itemadapter import ItemAdapter
@@ -10,6 +11,10 @@ from tldextract import extract
 from urllib.parse import urlparse
 import validators
 import logging
+import psycopg2
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 class DhscraperPipeline:
@@ -184,3 +189,55 @@ class GoogleSheetsPipeline:
             self.sh.append_row(header)
         logging.debug(f"Appended {len(self.rows)} rows to Google Sheets.")
         self.sh.append_rows(self.rows)
+
+
+class PostgresPipeline:
+    def __init__(self):
+        self.batch_size = 100
+        self.num_items = 0
+
+    def open_spider(self, spider):
+        self.conn = psycopg2.connect(
+            host=os.getenv("POSTGRES_HOST"),
+            dbname=os.getenv("POSTGRES_DB"),
+            user=os.getenv("POSTGRES_USER"),
+            password=os.getenv("POSTGRES_PASSWORD"),
+        )
+        self.cur = self.conn.cursor()
+
+    def process_item(self, item, spider):
+        adapter = ItemAdapter(item)
+        urls = adapter["urls"] or [None]
+        for url in urls:
+            try:
+                self.cur.execute(
+                    """
+                    INSERT INTO urls (conf_year, origin, abstract_url, scraped_url, notes, http_status)
+                    VALUES (%s, %s, %s, %s, %s, %s)
+                    ON CONFLICT DO NOTHING
+                    """,
+                    (
+                        adapter["year"],
+                        adapter["origin"],
+                        adapter["abstract"],
+                        url,
+                        adapter.get("notes", ""),
+                        adapter["http_status"],
+                    ),
+                )
+                self.num_items += 1
+
+                if self.num_items % self.batch_size == 0:
+                    self.conn.commit()
+            except psycopg2.Error:
+                self.conn.rollback()
+                raise
+
+        return item
+
+    def close_spider(self, spider):
+        if not hasattr(self, "conn"):
+            return
+        self.conn.commit()
+        self.cur.close()
+        self.conn.close()
