@@ -11,3 +11,5 @@ dhvenv/
 creds.json
 # Log files
 *.log
+# Environemnt files
+.env
