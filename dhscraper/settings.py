@@ -10,7 +10,9 @@ LOG_FILE = "logfile.log"
 LOG_LEVEL = "DEBUG"
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
-USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36"
+USER_AGENT = (
+    "dh-projects-scraper/1.0 (DH research project; mailto:l.poggel@fu-berlin.de)"
+)
 
 # Obey robots.txt rules
 ROBOTSTXT_OBEY = True
@@ -83,7 +85,8 @@ REDIRECT_ENABLED = True
 ITEM_PIPELINES = {
     "dhscraper.pipelines.DhscraperPipeline": 300,
     "dhscraper.pipelines.DuplicatesPipeline": 400,
-    "dhscraper.pipelines.GoogleSheetsPipeline": 500,
+    "dhscraper.pipelines.PostgresPipeline": 500,
+    # "dhscraper.pipelines.GoogleSheetsPipeline": 500,
 }
 
 # Enable and configure the AutoThrottle extension (disabled by default)
